@@ -73,11 +73,32 @@ export const storage = {
     localStorage.setItem(KEYS.seeded, '1');
   },
 
+  getFavoritesRaw(): Record<string, string[]> {
+    const raw = localStorage.getItem(KEYS.favorites);
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const uid = this.getCurrentUser().id;
+        const migrated: Record<string, string[]> = { [uid]: parsed };
+        write(KEYS.favorites, migrated);
+        return migrated;
+      }
+      return parsed as Record<string, string[]>;
+    } catch {
+      return {};
+    }
+  },
   getFavorites(): string[] {
-    return read<string[]>(KEYS.favorites, []);
+    const uid = this.getCurrentUser().id;
+    const all = this.getFavoritesRaw();
+    return all[uid] || [];
   },
   setFavorites(ids: string[]): void {
-    write(KEYS.favorites, ids);
+    const uid = this.getCurrentUser().id;
+    const all = this.getFavoritesRaw();
+    all[uid] = ids;
+    write(KEYS.favorites, all);
   },
   isFavorite(bookId: string): boolean {
     return this.getFavorites().includes(bookId);
