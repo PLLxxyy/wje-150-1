@@ -25,6 +25,7 @@ export const BookDetail: React.FC = () => {
   const [showSendModal, setShowSendModal] = useState(false);
   const [targetNickname, setTargetNickname] = useState('');
   const [targetCity, setTargetCity] = useState('');
+  const [favorited, setFavorited] = useState<boolean>(() => storage.isFavorite(bookId || ''));
 
   const book = storage.getBookById(bookId || '');
   if (!book) {
@@ -98,6 +99,12 @@ export const BookDetail: React.FC = () => {
     showToast('漂流已完成，书籍已归档', 'success');
   };
 
+  const handleToggleFavorite = () => {
+    const newState = storage.toggleFavorite(book.id);
+    setFavorited(newState);
+    showToast(newState ? '已加入收藏' : '已取消收藏', 'success');
+  };
+
   return (
     <div>
       <div className="back-link" onClick={() => navigate('/')}>← 返回首页</div>
@@ -135,6 +142,22 @@ export const BookDetail: React.FC = () => {
               {isHolder && book.status === '漂流中' && (
                 <button className="btn btn-secondary" onClick={handleArchive}>归档（结束漂流）</button>
               )}
+              <button
+                className={`btn ${favorited ? 'btn-favorite-active' : 'btn-secondary'}`}
+                onClick={handleToggleFavorite}
+              >
+                {favorited ? '★ 已收藏' : '☆ 收藏'}
+              </button>
+            </div>
+          )}
+          {book.status === '已归档' && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+              <button
+                className={`btn ${favorited ? 'btn-favorite-active' : 'btn-secondary'}`}
+                onClick={handleToggleFavorite}
+              >
+                {favorited ? '★ 已收藏' : '☆ 收藏'}
+              </button>
             </div>
           )}
         </div>

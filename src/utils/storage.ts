@@ -5,6 +5,7 @@ const KEYS = {
   records: 'drift_records',
   user: 'drift_current_user',
   seeded: 'drift_seeded',
+  favorites: 'drift_favorites',
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -70,5 +71,35 @@ export const storage = {
   },
   markSeeded(): void {
     localStorage.setItem(KEYS.seeded, '1');
+  },
+
+  getFavorites(): string[] {
+    return read<string[]>(KEYS.favorites, []);
+  },
+  setFavorites(ids: string[]): void {
+    write(KEYS.favorites, ids);
+  },
+  isFavorite(bookId: string): boolean {
+    return this.getFavorites().includes(bookId);
+  },
+  addFavorite(bookId: string): void {
+    const ids = this.getFavorites();
+    if (!ids.includes(bookId)) {
+      ids.unshift(bookId);
+      this.setFavorites(ids);
+    }
+  },
+  removeFavorite(bookId: string): void {
+    const ids = this.getFavorites().filter((id) => id !== bookId);
+    this.setFavorites(ids);
+  },
+  toggleFavorite(bookId: string): boolean {
+    if (this.isFavorite(bookId)) {
+      this.removeFavorite(bookId);
+      return false;
+    } else {
+      this.addFavorite(bookId);
+      return true;
+    }
   },
 };

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import { BookCard } from '../components/BookCard';
 
-type MyTab = 'published' | 'holding' | 'history';
+type MyTab = 'published' | 'holding' | 'history' | 'favorites';
 
 export const MyBooks: React.FC = () => {
   const [tab, setTab] = useState<MyTab>('published');
@@ -11,6 +11,7 @@ export const MyBooks: React.FC = () => {
   const user = storage.getCurrentUser();
   const books = storage.getBooks();
   const records = storage.getRecords();
+  const favoriteIds = storage.getFavorites();
 
   const published = useMemo(() => books.filter((b) => b.publisherId === user.id), [books, user.id]);
 
@@ -21,7 +22,13 @@ export const MyBooks: React.FC = () => {
     return books.filter((b) => bookIds.has(b.id));
   }, [books, records, user.id]);
 
-  const currentList = tab === 'published' ? published : tab === 'holding' ? holding : history;
+  const favorites = useMemo(() => {
+    const idSet = new Set(favoriteIds);
+    return books.filter((b) => idSet.has(b.id)).sort((a, b) => favoriteIds.indexOf(a.id) - favoriteIds.indexOf(b.id));
+  }, [books, favoriteIds]);
+
+  const currentList =
+    tab === 'published' ? published : tab === 'holding' ? holding : tab === 'history' ? history : favorites;
 
   return (
     <div>
@@ -45,17 +52,33 @@ export const MyBooks: React.FC = () => {
         <div className={`tab ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}>
           漂流历史 ({history.length})
         </div>
+        <div className={`tab ${tab === 'favorites' ? 'active' : ''}`} onClick={() => setTab('favorites')}>
+          我收藏的 ({favorites.length})
+        </div>
       </div>
 
       {currentList.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">{tab === 'published' ? '📖' : tab === 'holding' ? '🤲' : '📜'}</div>
+          <div className="empty-icon">
+            {tab === 'published' ? '📖' : tab === 'holding' ? '🤲' : tab === 'history' ? '📜' : '⭐'}
+          </div>
           <div className="empty-text">
-            {tab === 'published' ? '还没有发布过书籍' : tab === 'holding' ? '手中暂无书籍' : '暂无漂流历史'}
+            {tab === 'published'
+              ? '还没有发布过书籍'
+              : tab === 'holding'
+              ? '手中暂无书籍'
+              : tab === 'history'
+              ? '暂无漂流历史'
+              : '还没有收藏书籍'}
           </div>
           {tab === 'published' && (
             <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => navigate('/publish')}>
               去发布
+            </button>
+          )}
+          {tab === 'favorites' && (
+            <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => navigate('/')}>
+              去逛逛
             </button>
           )}
         </div>
